@@ -107,23 +107,11 @@ jobs:
           -DUSE_OPENGL=ON ^
           -DINSTALL_DIR="${{ github.workspace }}/install-wasm-${{ matrix.build_type }}" ^
           -DCMAKE_CXX_FLAGS="-s WASM=1 -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap'] -s ALLOW_MEMORY_GROWTH=1" ^
-          -DCMAKE_EXECUTABLE_SUFFIX=".js" ..
+          -DCMAKE_EXECUTABLE_SUFFIX=".js" ^
+          -S "${{ github.workspace }}"
 
     - name: Build
       shell: bash
       run: |
         cd build-${{ matrix.build_type }}
         cmake --build . --config ${{ matrix.build_type }} --target install -- -j4
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: wasm-build-${{ matrix.build_type }}
-        path: install-wasm-${{ matrix.build_type }}
-        retention-days: 7
-
-    - name: Clear build directory
-      shell: pwsh
-      run: |
-        Remove-Item -Recurse -Force build-${{ matrix.build_type }}
-        Remove-Item -Recurse -Force install-wasm-${{ matrix.build_type }}
