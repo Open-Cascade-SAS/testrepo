@@ -27,10 +27,6 @@
     {
       "name": "angle",
        "platform": "uwp"
-    },
-    {
-      "name": "opengl",
-      "platform": "!(android | ios | uwp | wasm32)"
     }
   ],
   "features": {
@@ -38,12 +34,6 @@
       "description": "Enables optional usage of ANGLE. Part of the module-visualization.",
       "dependencies": [
         "angle"
-      ]
-    },
-    "opengl": {
-      "description": "Enables optional usage of OpenGL. Part of the module-visualization.",
-      "dependencies": [
-        "opengl"
       ]
     },
     "tcl": {
