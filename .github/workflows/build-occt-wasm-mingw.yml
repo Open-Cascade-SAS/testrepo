@@ -45,19 +45,19 @@ jobs:
           mingw-w64-x86_64-toolchain
           mingw-w64-x86_64-cmake
           mingw-w64-x86_64-ninja
+          git
+
+    - name: Setup vcpkg
+      run: |
+        git clone https://github.com/microsoft/vcpkg.git
+        .\vcpkg\bootstrap-vcpkg.bat
+      shell: cmd
 
     - name: Setup Emscripten
       uses: mymindstorm/setup-emsdk@v14
       with:
         version: ${{ env.EMSDK_VERSION }}
         actions-cache-folder: emsdk-cache
-
-    - name: Setup vcpkg
-      run: |
-        $GitPath = (Get-Command git).Path
-        & $GitPath clone https://github.com/microsoft/vcpkg.git
-        .\vcpkg\bootstrap-vcpkg.bat
-      shell: pwsh
 
     - name: Add NuGet sources
       run: |
