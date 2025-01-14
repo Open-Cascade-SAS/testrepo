@@ -54,9 +54,10 @@ jobs:
 
     - name: Setup vcpkg
       run: |
-        git clone https://github.com/microsoft/vcpkg.git
+        $GitPath = (Get-Command git).Path
+        & $GitPath clone https://github.com/microsoft/vcpkg.git
         .\vcpkg\bootstrap-vcpkg.bat
-      shell: cmd
+      shell: pwsh
 
     - name: Add NuGet sources
       run: |
