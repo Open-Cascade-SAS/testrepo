@@ -1,4 +1,4 @@
-# This workflow validates the WebAssembly build on Windows using MinGW and MSYS2.
+# This workflow validates the WebAssembly build on Windows.
 # It is triggered on pushes to the master branch.
 # The workflow includes steps to install dependencies, configure, build, and clean up the project.
 
@@ -21,7 +21,7 @@ env:
   VCPKG_EXE: ${{ github.workspace }}/vcpkg/vcpkg
   FEED_URL: https://nuget.pkg.github.com/Open-Cascade-SAS/index.json
   VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/Open-Cascade-SAS/index.json,readwrite"
-  EMSDK_VERSION: 3.1.51
+  EMSDK_VERSION: 3.1.74
 
 jobs:
   wasm-build:
@@ -36,20 +36,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4.1.7
 
-    - name: Set up MSYS2
-      uses: msys2/setup-msys2@v2
-      with:
-        msystem: MINGW64
-        update: true
-        install: >-
-          mingw-w64-x86_64-toolchain
-          mingw-w64-x86_64-cmake
-          mingw-w64-x86_64-ninja
-          git
-
     - name: Setup vcpkg
       run: |
-        git clone https://github.com/microsoft/vcpkg.git
+        git clone --branch 2024.12.16 https://github.com/microsoft/vcpkg.git
         .\vcpkg\bootstrap-vcpkg.bat
       shell: cmd
 
