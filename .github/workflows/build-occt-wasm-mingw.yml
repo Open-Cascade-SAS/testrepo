@@ -1,0 +1,122 @@
+# This workflow validates the WebAssembly build on Windows using MinGW and MSYS2.
+# It is triggered on pushes to the master branch.
+# The workflow includes steps to install dependencies, configure, build, and clean up the project.
+
+name: WebAssembly build
+
+on:
+  pull_request:
+    branches:
+      - '**'
+  push:
+    branches:
+      - 'master'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  USERNAME: Open-Cascade-SAS
+  VCPKG_EXE: ${{ github.workspace }}/vcpkg/vcpkg
+  FEED_URL: https://nuget.pkg.github.com/Open-Cascade-SAS/index.json
+  VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/Open-Cascade-SAS/index.json,readwrite"
+  EMSDK_VERSION: 3.1.51
+
+jobs:
+  wasm-build:
+    name: WebAssembly Build
+    runs-on: windows-2022
+
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4.1.7
+
+    - name: Set up MSYS2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        install: >-
+          mingw-w64-x86_64-toolchain
+          mingw-w64-x86_64-cmake
+          mingw-w64-x86_64-ninja
+
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v14
+      with:
+        version: ${{ env.EMSDK_VERSION }}
+        actions-cache-folder: emsdk-cache
+
+    - name: Setup vcpkg
+      run: |
+        git clone https://github.com/microsoft/vcpkg.git
+        .\vcpkg\bootstrap-vcpkg.bat
+      shell: cmd
+
+    - name: Add NuGet sources
+      run: |
+        .$(${{ env.VCPKG_EXE }} fetch nuget) `
+          sources add `
+          -Source "${{ env.FEED_URL }}" `
+          -StorePasswordInClearText `
+          -Name GitHubPackages `
+          -UserName "${{ env.USERNAME }}" `
+          -Password "${{ secrets.GITHUB_TOKEN }}"
+        .$(${{ env.VCPKG_EXE }} fetch nuget) `
+          setapikey "${{ secrets.GITHUB_TOKEN }}" `
+          -Source "${{ env.FEED_URL }}"
+      shell: pwsh
+
+    - name: Configure VCPKG
+      shell: bash
+      run: |
+        mkdir -p build-${{ matrix.build_type }}
+        cd build-${{ matrix.build_type }}
+        emcmake cmake -G "Ninja" \
+          -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake \
+          -DVCPKG_TARGET_TRIPLET=wasm32-emscripten \
+          -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DBUILD_USE_VCPKG=ON \
+          -DUSE_MMGR_TYPE=NATIVE \
+          -DBUILD_LIBRARY_TYPE=Static \
+          -DBUILD_MODULE_Draw=OFF \
+          -DUSE_FREETYPE=ON \
+          -DUSE_TK=OFF \
+          -DUSE_DRACO=ON \
+          -DUSE_FFMPEG=OFF \
+          -DUSE_FREEIMAGE=ON \
+          -DUSE_GLES2=ON \
+          -DUSE_OPENVR=OFF \
+          -DUSE_VTK=OFF \
+          -DUSE_TBB=OFF \
+          -DUSE_RAPIDJSON=ON \
+          -DUSE_OPENGL=ON \
+          -DINSTALL_DIR="${{ github.workspace }}/install-wasm-${{ matrix.build_type }}" \
+          -DCMAKE_CXX_FLAGS="-s WASM=1 -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap'] -s ALLOW_MEMORY_GROWTH=1" \
+          -DCMAKE_EXECUTABLE_SUFFIX=".js" \
+          ..
+
+    - name: Build
+      shell: bash
+      run: |
+        cd build-${{ matrix.build_type }}
+        cmake --build . --config ${{ matrix.build_type }} --target install -- -j4
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: wasm-build-${{ matrix.build_type }}
+        path: install-wasm-${{ matrix.build_type }}
+        retention-days: 7
+
+    - name: Clear build directory
+      shell: pwsh
+      run: |
+        Remove-Item -Recurse -Force build-${{ matrix.build_type }}
+        Remove-Item -Recurse -Force install-wasm-${{ matrix.build_type }}
