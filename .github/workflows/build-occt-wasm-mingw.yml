@@ -68,17 +68,23 @@ jobs:
       shell: pwsh
 
     - name: Setup Emscripten
-      uses: mymindstorm/setup-emsdk@v14
-      with:
-        version: ${{ env.EMSDK_VERSION }}
-        actions-cache-folder: emsdk-cache
+      run: |
+        git clone https://github.com/emscripten-core/emsdk.git
+        cd emsdk
+        ./emsdk install ${{ env.EMSDK_VERSION }}
+        ./emsdk activate ${{ env.EMSDK_VERSION }}
+        echo "EMSDK=${{ github.workspace }}/emsdk" >> $GITHUB_ENV
+        echo "${{ github.workspace }}/emsdk" >> $GITHUB_PATH
+        echo "${{ github.workspace }}/emsdk/upstream/emscripten" >> $GITHUB_PATH
+      shell: bash
 
-    - name: Configure VCPKG
+    - name: Configure OCCT with vcpkg
       shell: bash
       run: |
+        source ${{ github.workspace }}/emsdk/emsdk_env.sh
         mkdir -p build-${{ matrix.build_type }}
-        set VCPKG_ROOT=${{ github.workspace }}/vcpkg
         cd build-${{ matrix.build_type }}
+        set VCPKG_ROOT=${{ github.workspace }}/vcpkg
         emcmake cmake -G "Ninja" ^
           -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake ^
           -DVCPKG_TARGET_TRIPLET=wasm32-emscripten ^
@@ -101,8 +107,7 @@ jobs:
           -DUSE_OPENGL=ON ^
           -DINSTALL_DIR="${{ github.workspace }}/install-wasm-${{ matrix.build_type }}" ^
           -DCMAKE_CXX_FLAGS="-s WASM=1 -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap'] -s ALLOW_MEMORY_GROWTH=1" ^
-          -DCMAKE_EXECUTABLE_SUFFIX=".js" ^
-          ..
+          -DCMAKE_EXECUTABLE_SUFFIX=".js" ^ ..
 
     - name: Build
       shell: bash
