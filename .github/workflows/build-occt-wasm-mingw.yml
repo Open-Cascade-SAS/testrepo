@@ -53,12 +53,6 @@ jobs:
         .\vcpkg\bootstrap-vcpkg.bat
       shell: cmd
 
-    - name: Setup Emscripten
-      uses: mymindstorm/setup-emsdk@v14
-      with:
-        version: ${{ env.EMSDK_VERSION }}
-        actions-cache-folder: emsdk-cache
-
     - name: Add NuGet sources
       run: |
         .$(${{ env.VCPKG_EXE }} fetch nuget) `
@@ -72,6 +66,12 @@ jobs:
           setapikey "${{ secrets.GITHUB_TOKEN }}" `
           -Source "${{ env.FEED_URL }}"
       shell: pwsh
+
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v14
+      with:
+        version: ${{ env.EMSDK_VERSION }}
+        actions-cache-folder: emsdk-cache
 
     - name: Configure VCPKG
       shell: bash
