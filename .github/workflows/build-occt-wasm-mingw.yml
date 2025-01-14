@@ -107,7 +107,7 @@ jobs:
           -DUSE_OPENGL=ON ^
           -DINSTALL_DIR="${{ github.workspace }}/install-wasm-${{ matrix.build_type }}" ^
           -DCMAKE_CXX_FLAGS="-s WASM=1 -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap'] -s ALLOW_MEMORY_GROWTH=1" ^
-          -DCMAKE_EXECUTABLE_SUFFIX=".js" ^ ..
+          -DCMAKE_EXECUTABLE_SUFFIX=".js" ..
 
     - name: Build
       shell: bash
