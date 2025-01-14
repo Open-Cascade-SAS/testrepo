@@ -81,14 +81,14 @@ jobs:
     - name: Configure OCCT with vcpkg
       shell: bash
       run: |
-        source ${{ github.workspace }}/emsdk/emsdk_env.sh
-        mkdir -p build-${{ matrix.build_type }}
-        cd build-${{ matrix.build_type }}
-        set VCPKG_ROOT=${{ github.workspace }}/vcpkg
+        source "${{ github.workspace }}/emsdk/emsdk_env.sh"
+        mkdir -p "build-${{ matrix.build_type }}"
+        cd "build-${{ matrix.build_type }}"
+        set "VCPKG_ROOT=${{ github.workspace }}/vcpkg"
         emcmake cmake -G "Ninja" ^
-          -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake ^
+          -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" ^
           -DVCPKG_TARGET_TRIPLET=wasm32-emscripten ^
-          -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake ^
+          -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake" ^
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ^
           -DBUILD_USE_VCPKG=ON ^
           -DUSE_MMGR_TYPE=NATIVE ^
